@@ -1,0 +1,81 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ConsoleApp15
+{
+    class Program
+    {
+        static async Task Main(string[] args)
+        {
+           var a=  await DownLoadPdf(@"D:\WeixinFile\测试.pdf", "https://msgcentertest.cmsk1979.com/approveList/20201026/20201026-20102600012.pdf");
+        }
+
+        public static async Task<HttpPostresultDTO> DownLoadPdf(string path, string url)
+        {
+            var resultmodel = new HttpPostresultDTO(false, "");
+            try
+            {
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    if (url.StartsWith("https"))
+                    {
+                        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls;
+                    }
+                    HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
+                    httpRequestMessage.Method = new HttpMethod("GET");
+                    httpRequestMessage.Headers.Add("context-type", "application/pdf");
+                    httpRequestMessage.RequestUri = new Uri(url);
+                    var httpResponseMessage = await httpClient.SendAsync(httpRequestMessage).ConfigureAwait(false);
+                    if (httpResponseMessage.IsSuccessStatusCode)
+                    {
+                        Stream stream = await httpResponseMessage.Content.ReadAsStreamAsync();
+                        using (FileStream fs = new FileStream(path, FileMode.CreateNew))
+                        {
+                            byte[] buffer = new byte[stream.Length];
+                            stream.Read(buffer, 0, buffer.Length);
+                            fs.Write(buffer, 0, buffer.Length);
+                        }
+                    }
+                    else
+                    {
+                        var erroresponCode = $"Http响应{httpResponseMessage.StatusCode}失败";
+                        resultmodel.Result = erroresponCode;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                resultmodel.Result = $"http请求异常:{e.Message}";
+            }
+            return resultmodel;
+        }
+    }
+
+    public class HttpPostresultDTO
+    {
+        /// <summary>
+        /// 是否成功
+        /// </summary>
+        public bool Success { get; set; }
+        /// <summary>
+        /// 返回结果
+        /// </summary>
+        public string Result { get; set; }
+        /// <summary>
+        /// 结果返回
+        /// </summary>
+        /// <param name="success">是否成功</param>
+        /// <param name="result">结果</param>
+        public HttpPostresultDTO(bool success, string result)
+        {
+            Success = success;
+            Result = result;
+        }
+    }
+}
