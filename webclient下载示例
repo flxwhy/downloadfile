@@ -1,0 +1,17 @@
+  public static void DownloadFile(string url) {
+            try
+            {
+                if (!Directory.Exists(_directory))
+                {
+                    Directory.CreateDirectory(_directory);
+                }
+                WebClient client = new WebClient();
+                client.DownloadFile(url, _directory + fileName);
+                Console.WriteLine("下载成功");
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("下载错误" + e.Message);
+            }
+
+        }
